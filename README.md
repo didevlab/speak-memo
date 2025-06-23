@@ -13,7 +13,7 @@
 - 🐇 Publicação de metadados na fila RabbitMQ
 - 🎧 Reprodução automática no navegador via WebSocket
 - 🧹 Auto delete do áudio após reprodução
-- 📈 Histórico e estatísticas de interações em tempo real, com agrupamento por tipo, contexto e rotina
+- 📈 Histórico e estatísticas de interações em tempo real
 
 ---
 
@@ -42,16 +42,46 @@ docker compose up -d --build
 
 ```
 app/
-├── public/                   # Frontend estático com reprodutor
+├── public/               # Frontend estático com reprodutor
 │   ├── index.html
 │   ├── style.css
 │   └── favicon.ico
-├── server.js                 # Backend Express + WebSocket + RabbitMQ
-├── speakmemo-history.json   # Armazena o histórico de interações
-n8n-projects/                 # Fluxos n8n exportados (.json)
-.env                          # Variáveis de ambiente
-docker-compose.yml            # Orquestra backend + dependências
+├── server.js             # Backend Express + WebSocket + RabbitMQ
+├── speakmemo-history.json
+n8n-projects/             # Fluxos n8n exportados (.json)
+.env                      # Variáveis de ambiente
+docker-compose.yml        # Orquestra backend + dependências
 ```
+
+---
+
+## 📊 Métricas de Interações
+
+As interações são classificadas por três dimensões:
+
+### 📌 Tipo (`type`)
+Refere-se à natureza da mensagem.
+- `greeting` → Saudações como "Hello", "Good morning"
+- `question` → Frases interrogativas
+- `instruction` → Comandos, instruções diretas
+- `statement` → Afirmações simples
+
+### 🕐 Contexto (`context`)
+Indica em que momento ou situação a frase é mais comum.
+- `morning` → Usada pela manhã
+- `afternoon`, `evening`, `night` → Momentos do dia
+- `introduction` → Usada para se apresentar
+- `work`, `travel`, `shopping`, `daily` → Temas cotidianos
+
+### 🔁 Rotina (`routine`)
+Organiza a interação segundo seu objetivo ou fluxo automatizado.
+- `daily-routine` → Rotinas diárias
+- `asking-time` → Perguntas sobre horários
+- `preferences` → Gostos e hábitos
+- `practice` → Frases de repetição para treino
+- `custom` → Rotinas criadas livremente pelo usuário
+
+Essas categorias ajudam a monitorar o progresso e organizar seu aprendizado.
 
 ---
 
@@ -63,7 +93,6 @@ docker-compose.yml            # Orquestra backend + dependências
 4. Um evento é publicado na fila `00_speak_memo_audio_process_play`
 5. O site detecta o evento via WebSocket, baixa e reproduz o som
 6. Após a reprodução, o áudio é deletado automaticamente
-7. A interação é registrada com metadados: tipo, contexto e rotina
 
 ---
 
@@ -92,10 +121,7 @@ docker-compose up -d --build
 ```bash
 docker build -t speakmemo-app .
 
-docker run -d --name speakmemo \
-  -p 3000:3000 \
-  --env-file .env \
-  speakmemo-app
+docker run -d --name speakmemo   -p 3000:3000   --env-file .env   speakmemo-app
 ```
 
 > Certifique-se de que o arquivo `.env` esteja corretamente configurado com as variáveis de MinIO, RabbitMQ e porta do app.
