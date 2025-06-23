@@ -124,6 +124,16 @@ async function startConsumer() {
   ch.consume(QUEUE_NAME, (msg) => {
     if (msg !== null) {
       const payload = JSON.parse(msg.content.toString());
+
+      // Garante que os campos existam (evita que o frontend quebre)
+      payload.pronunciation = payload.pronunciation || "";
+      payload.meaning = payload.meaning || "";
+      payload.reply = payload.reply || {
+        text: "",
+        pronunciation: "",
+        meaning: ""
+      };
+
       const key = `${MINIO_BASE_PATH}/${payload.file}`;
       const fileUrl = generatePresignedUrl(key);
       payload.audioUrl = fileUrl;

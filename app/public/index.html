@@ -8,8 +8,14 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h2>🗣️ SpeakMemo - Interação em Inglês</h2>
-  <div id="alert">⌛ Aguardando mensagem do SpeakMemo...</div>
+  <h2 class="title-with-logo">
+    <img src="speakmemo-logot.png" alt="Logo SpeakMemo" class="title-logo">
+    <span>Interação em Inglês</span>
+  </h2>
+  
+  <div id="alert" class="message-box">
+    <h3>⌛ Aguardando mensagem do SpeakMemo...</h3>
+  </div>
 
   <button id="enableSound" onclick="enableAudio()">▶️ Ativar áudio</button>
   <button id="toggleMute" onclick="toggleMute()" style="display: none;">🔇 Silenciar</button>
@@ -68,8 +74,21 @@
     socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
 
-      document.getElementById('alert').innerText =
-        `${data.text}\n(${data.datetime})`;
+      document.getElementById('alert').innerHTML = `
+        <div class="message-box">
+          <h3>🗣️ SpeakMemo - Interação em Inglês</h3>
+          <p><strong>🗨️ Frase:</strong> ${data.text}</p>
+          <p><strong>📣 Pronúncia:</strong> ${data.pronunciation}</p>
+          <p><strong>💬 Significado:</strong> ${data.meaning}</p>
+          
+          <p><strong>🔁 Resposta:</strong> ${data.reply?.text || '-'}</p>
+          <p><strong>📣 Pronúncia:</strong> ${data.reply?.pronunciation || '-'}</p>
+          <p><strong>💬 Significado:</strong> ${data.reply?.meaning || '-'}</p>
+
+          <p style="font-size: 12px; color: #777;">🕒 ${data.datetime}</p>
+        </div>
+      `;
+
 
       audioUrl = data.audioUrl;
       player.src = audioUrl;
