@@ -6,6 +6,21 @@ core: speak
 version: 1.0.1
 
 ##############################
+# Definition of the Secret
+secret:
+  - name: rabbitmq
+    type: Opaque
+    data:
+      RABBITMQ_DEFAULT_USER: cmFiYml0bXE= # rabbitmq
+      RABBITMQ_DEFAULT_PASS: U3ZjUmFiYml0TXE= # SvcRabbitMq
+
+  - name: minio
+    type: Opaque
+    data:
+      MINIO_ROOT_USER: bWluaW8= #minio
+      MINIO_ROOT_PASSWORD: TWluaW9TM1N1Y2Nlc3M= #MinioS3Success
+
+##############################
 # Definition of the Deployment
 deployment:
   replicas: 1

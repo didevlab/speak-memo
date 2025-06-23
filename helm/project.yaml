@@ -1,0 +1,17 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: speak-memo
+  namespace: argocd  
+spec:
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  description: Project SpeakMemo
+  destinations:
+    - namespace: speak-memo
+      server: https://kubernetes.default.svc
+  roles: []
+  sourceRepos:
+    - https://github.com/didevlab/speak-memo
+    - https://github.com/syrin-alert/apps-chart

@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  labels:
+    app: speak-memo
+    component: web-speaker
+    project: speak-memo
+  name: speak-memo
+  namespace: argocd
+spec:
+  destination:
+    namespace: speak-memo
+    server: https://kubernetes.default.svc
+  project: speak-memo
+  sources:
+    - ref: values
+      repoURL: https://github.com/didevlab/speak-memo
+      targetRevision: main
+    - helm:
+        valueFiles:
+          - $values/helm/values.yaml
+      path: .
+      repoURL: https://github.com/syrin-alert/apps-chart
+      targetRevision: main
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
