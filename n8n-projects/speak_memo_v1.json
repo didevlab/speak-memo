@@ -3,59 +3,6 @@
   "nodes": [
     {
       "parameters": {
-        "method": "POST",
-        "url": "http://svc-kokoro.kokoro.svc.cluster.local/v1/audio/speech",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"kokoro\",\n  \"voice\": \"{{ $('Saudação matinal').item.json.voice }}\",\n  \"input\": \"{{ $('Saudação matinal').item.json.text }}\",\n  \"speed\": 0.8,\n  \"language\": \"en\"\n}",
-        "options": {
-          "timeout": 600000
-        }
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        300,
-        -360
-      ],
-      "id": "6e23ba78-75c0-43bd-8bd8-a9f42f090c7e",
-      "name": "kokoro-tts"
-    },
-    {
-      "parameters": {
-        "jsCode": "// Lista de vozes disponíveis\nconst voices = [\n  \"af_bella\", \"af_nicole\", \"af_sarah\", \"af_sky\",\n  \"bf_emma\", \"bf_isabella\",\n  \"am_adam\", \"am_michael\", \"bm_george\", \"bm_lewis\"\n];\n\n// Sorteia uma voz\nconst randomVoice = voices[Math.floor(Math.random() * voices.length)];\n\n// Retorna a frase + voz sorteada\nreturn [\n  {\n    json: {\n      text: \"Hello Diego, good morning!\",\n      type: \"greeting\",\n      context: \"morning\",\n      routine: \"daily-routine\",\n      voice: randomVoice\n    }\n  }\n];\n"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -440,
-        -280
-      ],
-      "id": "00b32f11-58f7-447f-aaf8-1db99227ee5f",
-      "name": "Saudação matinal"
-    },
-    {
-      "parameters": {
-        "rule": {
-          "interval": [
-            {
-              "triggerAtHour": 9,
-              "triggerAtMinute": 3
-            }
-          ]
-        }
-      },
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.2,
-      "position": [
-        -640,
-        -280
-      ],
-      "id": "32faafc0-5cbb-4931-b83b-53b1e56ada14",
-      "name": "9:03am-Saudação matinal"
-    },
-    {
-      "parameters": {
         "options": {
           "timezone": "America/Sao_Paulo"
         }
@@ -63,16 +10,131 @@
       "type": "n8n-nodes-base.dateTime",
       "typeVersion": 2,
       "position": [
-        -260,
-        -280
+        -640,
+        -860
       ],
-      "id": "61301f2d-4897-493e-be78-95ca17c69df0",
+      "id": "8adeaeda-6ac2-4ee8-a28f-60e0392fb87f",
       "name": "GetTimeCurrent"
     },
     {
       "parameters": {
+        "jsCode": "const date = new Date($json[\"currentDate\"]);\n\nconst minutes = date.getMinutes();\nconst hours = date.getHours() - 3;\n//const day = date.getDate();\n//const month = date.getMonth() + 1; // meses vão de 0 a 11\n//const dayOfWeek = '*'; // ou calcule com date.getDay() se quiser\n\n//const cron = `${minutes} ${hours} ${day} ${month} ${dayOfWeek}`;\nconst cron = `${minutes} ${hours} * * *`;\n// const cron = `30 9 * * *`;\n\nreturn [{ json: { cronExpression: cron } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -460,
+        -860
+      ],
+      "id": "e052dac7-b1a2-4a8c-960d-065755635c3e",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "url": "=http://svc-speak-memo-backend.speak-memo.svc.cluster.local/messages/?cron_expression={{ $json.cronExpression }}",
+        "options": {
+          "timeout": 600000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -280,
+        -860
+      ],
+      "id": "d288d094-09f2-4a5a-b071-c222aa7ddde0",
+      "name": "speak-memo-backend"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -820,
+        -860
+      ],
+      "id": "5b616443-a3cb-4750-8cb8-a72f265cad2e",
+      "name": "start-every-minuto"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://svc-kokoro.kokoro.svc.cluster.local/v1/audio/speech",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"kokoro\",\n  \"voice\": \"{{ $json.voice }}\",\n  \"input\": \"{{ $('speak-memo-backend').item.json.text }}\",\n  \"speed\": 0.8,\n  \"language\": \"en\"\n}",
+        "options": {
+          "timeout": 600000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -420,
+        -660
+      ],
+      "id": "e7add8e6-d5e6-4e2e-9798-82efdc392664",
+      "name": "kokoro-tts"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "834f2a2b-c12d-4c9d-9820-d9a52f76835e",
+              "leftValue": "={{ Object.keys($json).length }}",
+              "rightValue": "={{ 0 }}",
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -120,
+        -860
+      ],
+      "id": "a310f6a5-32a7-45d2-8665-2f52271b6401",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "functionCode": "const voices = [\n  \"af_bella\", \"af_nicole\", \"af_sarah\", \"af_sky\",\n  \"bf_emma\", \"bf_isabella\",\n  \"am_adam\", \"am_michael\", \"bm_george\", \"bm_lewis\"\n];\nconst randomVoice = voices[Math.floor(Math.random() * voices.length)];\n\nreturn [\n  {\n    json: {\n      voice: randomVoice\n    }\n  }\n];"
+      },
+      "id": "473cf1ca-c0ff-48bd-b9be-8940897d1395",
+      "name": "Get-Random-Voice",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -620,
+        -660
+      ]
+    },
+    {
+      "parameters": {
         "operation": "formatDate",
-        "date": "={{ $json.currentDate }}",
+        "date": "={{ $('GetTimeCurrent').item.json.currentDate }}",
         "format": "custom",
         "customFormat": "dd-LL-yyyy/TT",
         "outputFieldName": "=formattedDate",
@@ -83,55 +145,11 @@
       "type": "n8n-nodes-base.dateTime",
       "typeVersion": 2,
       "position": [
-        -60,
-        -280
+        -820,
+        -660
       ],
-      "id": "f2738b6f-7004-4b35-928a-3077bd431aa6",
-      "name": "Formmat-Date-Time"
-    },
-    {
-      "parameters": {
-        "operation": "upload",
-        "bucketName": "=speakmemo",
-        "fileName": "=/queue-play/{{ $json.formattedDate }}.mp3",
-        "additionalFields": {}
-      },
-      "type": "n8n-nodes-base.s3",
-      "typeVersion": 1,
-      "position": [
-        480,
-        -280
-      ],
-      "id": "52eb57f3-82ff-4b86-9c82-1203f1828512",
-      "name": "S3-Upload-Voice",
-      "credentials": {
-        "s3": {
-          "id": "w7pdpt1NwHoR2zCE",
-          "name": "S3 account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "queue": "00_speak_memo_audio_process_play",
-        "sendInputData": false,
-        "message": "={\n  \"text\": \"{{ $('Saudação matinal').item.json.text }}\",\n  \"voice\": \"{{ $('Saudação matinal').item.json.voice }}\",\n  \"file\": \"{{ $('kokoro-tts').item.json.formattedDate }}.mp3\",\n  \"type\": \"{{ $('Saudação matinal').item.json.type }}\",\n  \"context\": \"{{ $('Saudação matinal').item.json.context }}\",\n  \"routine\": \"{{ $('Saudação matinal').item.json.routine }}\",\n  \"datetime\": \"{{ $('Formmat-Date-Time-Start').item.json.formattedDate }}\"\n}\n",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.rabbitmq",
-      "typeVersion": 1.1,
-      "position": [
-        660,
-        -280
-      ],
-      "id": "1b82d15e-f553-48ca-b4cf-5af9f3c07bfc",
-      "name": "00_speak_memo_audio_process_play",
-      "credentials": {
-        "rabbitmq": {
-          "id": "G3vzUbcAvacKyFsH",
-          "name": "RabbitMQ account"
-        }
-      }
+      "id": "0f0a6382-eb70-4060-97de-3acc56ff26e8",
+      "name": "Format-Date-Time-Post-Minio"
     },
     {
       "parameters": {
@@ -147,15 +165,186 @@
       "type": "n8n-nodes-base.dateTime",
       "typeVersion": 2,
       "position": [
-        140,
-        -280
+        0,
+        -660
       ],
-      "id": "a2493476-acf6-4725-b47f-bc8122cb456f",
-      "name": "Formmat-Date-Time-Start"
+      "id": "b59d96c0-7507-4092-ad70-3c232220b26e",
+      "name": "Format-Date-Time-Post-Audio-Minio"
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "bucketName": "=speakmemo",
+        "fileName": "=/queue-play/{{ $('Format-Date-Time-Post-Minio').item.json.formattedDate }}.mp3",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.s3",
+      "typeVersion": 1,
+      "position": [
+        -220,
+        -660
+      ],
+      "id": "5af6c2a0-0835-4097-be4b-a0fb89f00c3f",
+      "name": "S3-Upload-Voice",
+      "credentials": {
+        "s3": {
+          "id": "w7pdpt1NwHoR2zCE",
+          "name": "S3 account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "queue": "00_speak_memo_audio_process_play",
+        "sendInputData": false,
+        "message": "={\n  \"text\": \"{{ $('speak-memo-backend').item.json.text }}\",\n  \"pronunciation\": \"{{ $('speak-memo-backend').item.json.pronunciation }}\",\n  \"meaning\": \"{{ $('speak-memo-backend').item.json.meaning }}\",\n  \"reply\": {\n    \"text\": \"{{ $('speak-memo-backend').item.json.reply_text }}\",\n    \"pronunciation\": \"{{ $('speak-memo-backend').item.json.reply_pronunciation }}\",\n    \"meaning\": \"{{ $('speak-memo-backend').item.json.reply_meaning }}\"\n  },\n  \"voice\": \"{{ $('Get-Random-Voice').item.json.voice }}\",\n  \"file\": \"{{ $('Format-Date-Time-Post-Minio').item.json.formattedDate }}.mp3\",\n  \"type\": \"{{ $('speak-memo-backend').item.json.type }}\",\n  \"context\": \"{{ $('speak-memo-backend').item.json.context }}\",\n  \"routine\": \"{{ $('speak-memo-backend').item.json.routine }}\",\n  \"datetime\": \"{{ $json.formattedDate }}\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rabbitmq",
+      "typeVersion": 1.1,
+      "position": [
+        200,
+        -660
+      ],
+      "id": "58486fa8-ceb7-4fe9-8f62-c0ab8df18e34",
+      "name": "00_speak_memo_audio_process_play",
+      "credentials": {
+        "rabbitmq": {
+          "id": "G3vzUbcAvacKyFsH",
+          "name": "RabbitMQ account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=http://192.168.15.36:8000/messages/",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "cron_expression",
+              "value": "0 9 * * *"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 600000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -460,
+        -420
+      ],
+      "id": "82fd72b2-a647-403f-bb67-79190abd1403",
+      "name": "DEV-speak-memo-backend"
+    },
+    {
+      "parameters": {
+        "url": "=http://svc-speak-memo-backend.speak-memo.svc.cluster.local/messages/",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "cron_expression",
+              "value": "0 9 * * *"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 600000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -180,
+        -420
+      ],
+      "id": "5424ed13-7168-4447-8c0e-5a3294686785",
+      "name": "PRD-speak-memo-backend"
     }
   ],
   "pinData": {},
   "connections": {
+    "GetTimeCurrent": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "speak-memo-backend",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "start-every-minuto": {
+      "main": [
+        [
+          {
+            "node": "GetTimeCurrent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "speak-memo-backend": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Format-Date-Time-Post-Minio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get-Random-Voice": {
+      "main": [
+        [
+          {
+            "node": "kokoro-tts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format-Date-Time-Post-Minio": {
+      "main": [
+        [
+          {
+            "node": "Get-Random-Voice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "kokoro-tts": {
       "main": [
         [
@@ -167,51 +356,7 @@
         ]
       ]
     },
-    "Saudação matinal": {
-      "main": [
-        [
-          {
-            "node": "GetTimeCurrent",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "9:03am-Saudação matinal": {
-      "main": [
-        [
-          {
-            "node": "Saudação matinal",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "GetTimeCurrent": {
-      "main": [
-        [
-          {
-            "node": "Formmat-Date-Time",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Formmat-Date-Time": {
-      "main": [
-        [
-          {
-            "node": "Formmat-Date-Time-Start",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "S3-Upload-Voice": {
+    "Format-Date-Time-Post-Audio-Minio": {
       "main": [
         [
           {
@@ -222,11 +367,11 @@
         ]
       ]
     },
-    "Formmat-Date-Time-Start": {
+    "S3-Upload-Voice": {
       "main": [
         [
           {
-            "node": "kokoro-tts",
+            "node": "Format-Date-Time-Post-Audio-Minio",
             "type": "main",
             "index": 0
           }
@@ -238,7 +383,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "eeb1b206-3f53-4003-ba73-1b78baa78701",
+  "versionId": "3f1f83f2-dae7-4fbd-9bd7-79c8ef7367d3",
   "meta": {
     "instanceId": "66a3c10f0a6579f8f080184ed59b4d630266bf0739abc44951b886256ef7409e"
   },
