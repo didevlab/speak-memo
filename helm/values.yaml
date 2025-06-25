@@ -3,7 +3,7 @@
 app: speak-memo
 component: web
 core: speak
-version: 1.0.2
+version: 1.0.3
 
 ##############################
 # Definition of the Secret
